@@ -11,7 +11,8 @@
 using namespace std;
 
 void toyModel(int number_of_events = 1000,
-              int number_of_particles = 100) // number of particles per event
+              int number_of_particles = 100,     // number of particles per event
+              int number_of_jet_particles = 100) 
 {
     // gStyle->SetOptStat(111111);
     gStyle->SetPalette(kDeepSea);
@@ -28,9 +29,6 @@ void toyModel(int number_of_events = 1000,
                           100, -1, 1);           // y axis
     hist->SetStats(0); // to get rid of the legend
 
-    // initialize a random number generator
-    gRandom = new TRandom3(0);
-
     // vectors to store values of phi and eta
     vector<double> phi_values = {};
     vector<double> eta_values = {};
@@ -38,15 +36,18 @@ void toyModel(int number_of_events = 1000,
     // isotropic multi-event generator
     for(int i = 0; i < number_of_events; i++)
     {
+        // initialize a random number generator
+        gRandom = new TRandom3(0);
+
         // phi is in an interval [0, 2pi], these are the endpoints for the interval
         double phi_min = 0;
         double phi_max = 2*TMath::Pi();
 
-        // doing the same for eta
+        // eta in [-1, 1]
         double eta_min = -1;
         double eta_max = 1;
 
-        // generating random values for phi from the above interval
+        // generating random values for phi from the above interval (background)
         for(int i = 0; i < number_of_particles; i++)
         {
             double phi = phi_min + gRandom->Rndm()*(phi_max - phi_min);
@@ -59,11 +60,29 @@ void toyModel(int number_of_events = 1000,
             // entering these into our histogram
             hist->Fill(phi, eta);
         }
+
+        // GENERATING ONE JET PER EVENT
+        double phi_jet = phi_min + gRandom->Rndm()*(phi_max - phi_min); // jet axis in azimuth
+        double eta_jet = eta_min + gRandom->Rndm()*(eta_max - eta_min);
+
+        for(int i = 0; i < number_of_jet_particles; i++)
+        {
+            double phi_jet_particle = gRandom->Gaus(phi_jet, 0.1);
+            double eta_jet_particle = gRandom->Gaus(eta_jet, 0.1);
+
+            phi_values.push_back(phi_jet);
+            eta_values.push_back(eta_jet_particle);
+
+            hist->Fill(phi_jet_particle, eta_jet_particle);
+        }
+
     }
 
     hist->GetXaxis()->SetTitle("#phi");
     hist->GetYaxis()->SetTitle("#eta");
     hist->Draw("Colz"); // use Lego2 for fancy 3D plot and Colz for regular 2D plot
+
+    // TWO PARTICLE CORRELATION
 
     // creating a canvas to draw stuff on
     TCanvas *c2 = new TCanvas();
@@ -77,12 +96,14 @@ void toyModel(int number_of_events = 1000,
 
     for(int i = 0; i < phi_values.size(); ++i)
     {
-        for(int j = i+1; j < phi_values.size(); ++j)
+        for(int j = 0; j < phi_values.size(); ++j)
         {
+            if (j == i) {continue;}
+
             double delta_phi = phi_values[i] - phi_values[j];
             double delta_eta = eta_values[i] - eta_values[j];
 
-            // accounting for the periodic nature of phi and delta_phi
+            // accounting for the periodic nature of delta_phi
             while (delta_phi > 2*TMath::Pi())
             {
                 delta_phi -= 2*TMath::Pi();
