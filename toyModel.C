@@ -10,9 +10,10 @@
 #include <vector>
 using namespace std;
 
-void toyModel(int number_of_events = 1000,
+void toyModel(int number_of_events = 100,
               int number_of_particles = 100,     // number of particles per event
-              int number_of_jet_particles = 100) 
+              int number_of_jet_particles = 100, // same for recoil jets
+              bool show_recoil_jet = false)       // this is the jet emitted opposite in azimuth to the single jet
 {
     // gStyle->SetOptStat(111111);
     gStyle->SetPalette(kDeepSea);
@@ -70,10 +71,40 @@ void toyModel(int number_of_events = 1000,
             double phi_jet_particle = gRandom->Gaus(phi_jet, 0.1);
             double eta_jet_particle = gRandom->Gaus(eta_jet, 0.1);
 
-            phi_values.push_back(phi_jet);
+            phi_values.push_back(phi_jet_particle);
             eta_values.push_back(eta_jet_particle);
 
             hist->Fill(phi_jet_particle, eta_jet_particle);
+        }
+
+        // RECOIL JET
+        if (show_recoil_jet)
+        {
+            double phi_recoil = phi_jet + TMath::Pi(); // jet axis plus pi
+            
+            // making sure its in the interval [0, 2pi]
+            while (phi_recoil > 2*TMath::Pi())
+            {
+                phi_recoil -= 2*TMath::Pi();
+            }
+
+            while (phi_recoil < 0)
+            {
+                phi_recoil += 2*TMath::Pi();
+            }
+
+            double eta_recoil = eta_min + gRandom->Rndm()*(eta_max - eta_min); // this is still random because of lab frame boost
+
+            for(int i = 0; i < number_of_jet_particles; i++)
+            {
+                double phi_recoil_particle = gRandom->Gaus(phi_recoil, 0.1);
+                double eta_recoil_particle = gRandom->Gaus(eta_recoil, 0.1);
+
+                phi_values.push_back(phi_recoil_particle);
+                eta_values.push_back(eta_recoil_particle);
+
+                hist->Fill(phi_recoil_particle, eta_recoil_particle);
+            }
         }
 
     }
