@@ -14,7 +14,7 @@ void toyModel(int number_of_events = 100,
               int number_of_particles = 100,       // number of particles PER event
               int number_of_jet_particles = 100,   // same for recoil jets
               bool show_recoil_jet = true,        // this is the jet emitted opposite in azimuth to the single jet
-              bool is_isotropic = true)            // is the background isotropic or do we have flow
+              bool is_isotropic = false)            // is the background isotropic or do we have flow
 {
     // gStyle->SetOptStat(111111);
     gStyle->SetPalette(kDeepSea);
@@ -34,6 +34,9 @@ void toyModel(int number_of_events = 100,
     // vectors to store values of phi and eta
     vector<double> phi_values = {};
     vector<double> eta_values = {};
+
+    // Flow function
+    TF1* flow = new TF1("flow", "1 + 2*[0]*cos(2*(x - [1]))", 0, 2*TMath::Pi()); // [0],[1] are the parameters of the function
 
     // isotropic multi-event generator
     for(int i = 0; i < number_of_events; i++)
@@ -67,13 +70,13 @@ void toyModel(int number_of_events = 100,
         } 
         else // flow brackgorund
         {
+            double event_plane = phi_min + gRandom->Rndm()*(phi_max - phi_min); // this psi_pp
+            flow->SetParameters(0.3, event_plane); // initialize parameters of the function
+
+            hist->SetTitle("Event(s) Generated with Flow");
+
             for(int i = 0; i < number_of_particles; i++)
             {
-                double event_plane = phi_min + gRandom->Rndm()*(phi_max - phi_min); // this psi_pp
-
-                TF1* flow = new TF1("flow", "1 + 2*[0]*cos(2*(x - [1]))", 0, 2*TMath::Pi()); // [0],[1] are the parameters of the function
-                flow->SetParameters(0.3, event_plane); // initialize parameters of the function
-
                 double phi  = flow->GetRandom(); // getting random number from flow function
                 double eta = eta_min + gRandom->Rndm()*(eta_max - eta_min); // same as before
 
