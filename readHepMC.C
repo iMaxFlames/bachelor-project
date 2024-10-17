@@ -46,7 +46,7 @@ void readHepMC(const std::string& hepmcFile = "test_out.hepmc") {
         for (const auto& particle : event.particles()) {
             int pdgId = particle->pid();
 
-	    if(particle->status() == 1) // final-state particles
+	    if(particle->status() == 1 && particle->momentum().eta() <= 1 && particle->momentum().eta() >= -1) // final-state particles
 	      {
 		TParticle* track = new((*particleArray)[nparticles]) TParticle();
 		track->SetPdgCode(particle->pid());
