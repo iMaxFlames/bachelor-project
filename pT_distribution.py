@@ -92,6 +92,31 @@ def plot_high_pT_events(high_pT_threshold=30.0):
     plt.savefig("Figures/xy_high_pT_events.pdf")
     plt.show()
 
-plot_high_pT_events()
-# plot_all_events()
 
+def plot_distance_hists(high_pT_threshold=30.0):
+    plt.figure()
+
+    r_all = []
+    r_high = []
+
+    for i in range(len(event_list)):
+        x = float(hard_process_list[i].split()[-4])
+        y = float(hard_process_list[i].split()[-3])
+        r = sqrt(x**2 + y**2)
+        r_all.append(r)
+        for hadron in event_list[i]:
+            pT = float(hadron.split()[5])
+            if pT >= high_pT_threshold:
+                r_high.append(r)
+    
+    plt.hist(r_all, bins=30, alpha=0.25, label="All Events", color="blue")
+    plt.hist(r_high, bins=30, alpha=0.75, label=r"Events that contain a particle with $p_T > {x}$GeV".format(x=high_pT_threshold),
+              color="blue")
+    
+    plt.xlabel("Distance [fm]")
+    plt.ylabel("Counts [a.u.]")
+    plt.legend()
+    plt.savefig("Figures/overlayerd_hist.pdf")
+    plt.show()
+
+plot_distance_hists()
